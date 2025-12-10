@@ -1,66 +1,100 @@
-import Image from "next/image";
-import styles from "./page.module.css";
+'use client';
+
+import { useState, useEffect } from 'react';
+import styles from './glass.module.css';
+import WeatherWidget from './components/WeatherWidget';
+import ThemeToggle from './components/ThemeToggle';
 
 export default function Home() {
+  const [todos, setTodos] = useState([]);
+  const [inputValue, setInputValue] = useState('');
+  const [theme, setTheme] = useState('dark');
+
+  // Initialize theme from local storage or system preference if desired, 
+  // currently defaults to dark to match initial design.
+  useEffect(() => {
+    document.body.setAttribute('data-theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
+  };
+
+  const addTodo = () => {
+    if (inputValue.trim() === '') return;
+
+    const newTodo = {
+      id: Date.now(),
+      text: inputValue,
+      completed: false,
+    };
+
+    setTodos([...todos, newTodo]);
+    setInputValue('');
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      addTodo();
+    }
+  };
+
+  const toggleTodo = (id) => {
+    setTodos(
+      todos.map((todo) =>
+        todo.id === id ? { ...todo, completed: !todo.completed } : todo
+      )
+    );
+  };
+
+  const deleteTodo = (id) => {
+    setTodos(todos.filter((todo) => todo.id !== id));
+  };
+
   return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
+    <main className={styles.glassContainer}>
+      <ThemeToggle theme={theme} toggleTheme={toggleTheme} />
+      <WeatherWidget />
+
+      <h1 className={styles.title}>Add Tasks</h1>
+
+      <div className={styles.inputGroup}>
+        <input
+          type="text"
+          className={styles.glassInput}
+          placeholder="Add a new task..."
+          value={inputValue}
+          onChange={(e) => setInputValue(e.target.value)}
+          onKeyDown={handleKeyDown}
         />
-        <div className={styles.intro}>
-          <h1>To get started, edit the page.js file.</h1>
-          <p>
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className={styles.logo}
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className={styles.secondary}
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+        <button className={styles.glassButton} onClick={addTodo}>
+          Add
+        </button>
+      </div>
+
+      <div className={styles.todoList}>
+        {todos.length === 0 ? (
+          <p className={styles.emptyState}>No tasks yet. Add one!</p>
+        ) : (
+          todos.map((todo) => (
+            <div key={todo.id} className={styles.todoItem}>
+              <span
+                className={`${styles.todoText} ${todo.completed ? styles.completed : ''
+                  } `}
+                onClick={() => toggleTodo(todo.id)}
+              >
+                {todo.text}
+              </span>
+              <button
+                className={styles.deleteButton}
+                onClick={() => deleteTodo(todo.id)}
+              >
+                ✕
+              </button>
+            </div>
+          ))
+        )}
+      </div>
+    </main>
   );
 }
